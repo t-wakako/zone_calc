@@ -247,6 +247,19 @@
 </head>
 <body>
   <div class="calculator">
+    <div class="section">
+      <div class="tabs">
+        <div class="tab active" id="tab1" onclick="setMode(1)">
+          Classic Meter
+        </div>
+        <div class="tab" id="tab2" onclick="setMode(2)">
+          Modern Meter
+        </div>
+      </div>
+
+      <label for="iso-select">実効感度を指定してください</label>
+      <select id="iso-select" onchange="calculate()"></select>
+
     <div class="section notes-section">
       <input
         type="text"
@@ -257,18 +270,6 @@
       >
     </div>
 
-    <div class="section">
-      <div class="tabs">
-        <div class="tab active" id="tab1" onclick="setMode(1)">
-          Classic Meter Mode
-        </div>
-        <div class="tab" id="tab2" onclick="setMode(2)">
-          Modern Meter Mode
-        </div>
-      </div>
-
-      <label for="iso-select">実効感度を指定してください</label>
-      <select id="iso-select" onchange="calculate()"></select>
     </div>
 
     <div class="section">
