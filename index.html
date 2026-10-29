@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zone System Calculator</title>
+  <style>
+    :root {
+      --bg: #1a1a1a;
+      --card: #2d2d2d;
+      --txt: #e0e0e0;
+      --accent: #4dadf7;
+    }
+
+    body {
+      font-family: sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 15px;
+    }
+
+    .calculator {
+      background: var(--card);
+      padding: 24px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 420px;
+      box-sizing: border-box;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      text-align: center;
+      margin: 0 0 20px;
+      letter-spacing: 0.05em;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-bottom: 8px;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      background: #3d3d3d;
+      border: 1px solid #555;
+      color: var(--txt);
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .tabs {
+      display: flex;
+      background: #3d3d3d;
+      border-radius: 8px;
+      padding: 2px;
+      margin-bottom: 12px;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #1a1a1a;
+      font-weight: bold;
+    }
+
+    .ev-control {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #3d3d3d;
+      border-radius: 12px;
+      padding: 6px;
+    }
+
+    .btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 1.5rem;
+      cursor: pointer;
+      width: 44px;
+      height: 44px;
+    }
+
+    .ev-val {
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .ev-label {
+      font-size: 0.7rem;
+      color: #aaa;
+      text-align: center;
+    }
+
+    .zone-bar {
+      display: flex;
+      background: #222;
+      border-radius: 12px;
+      padding: 6px;
+      gap: 4px;
+      justify-content: space-between;
+    }
+
+    .zone-box {
+      flex: 1;
+      text-align: center;
+      padding: 6px 2px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      min-height: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .z2 {
+      background: #222;
+      color: #888;
+    }
+
+    .z3 {
+      background: #3a3a3a;
+      color: #ccc;
+    }
+
+    .z4 {
+      background: #555;
+      color: #fff;
+    }
+
+    .z5 {
+      background: #777;
+      color: #fff;
+      border: 1px solid var(--accent);
+      box-sizing: border-box;
+    }
+
+    .z6 {
+      background: #999;
+      color: #000;
+    }
+
+    .z7 {
+      background: #bbb;
+      color: #000;
+    }
+
+    .z8 {
+      background: #ddd;
+      color: #000;
+    }
+
+    .zone-name {
+      font-weight: bold;
+    }
+
+    .zone-ev {
+      font-family: monospace;
+      font-size: 0.75rem;
+    }
+
+    .results-container {
+      background: #222;
+      border-radius: 12px;
+      padding: 8px 16px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 8px;
+      font-size: 0.95rem;
+      color: #888;
+      cursor: pointer;
+      border-radius: 6px;
+      margin: 2px 0;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .result-row.center {
+      color: var(--accent);
+      font-weight: bold;
+      font-size: 1.1rem;
+      border-top: 1px dashed #444;
+      border-bottom: 1px dashed #444;
+      padding: 7px 8px;
+      border-radius: 0;
+    }
+
+    /* 選択中の行は背景を青、文字を黒にする */
+    .result-row.selected,
+    .result-row.selected .stop-value {
+      background-color: var(--accent) !important;
+      color: #1a1a1a !important;
+      font-weight: bold;
+    }
+
+    /* 1段ごとの絞り値・シャッタースピードを個別に強調 */
+    .stop-value {
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .notes-section input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border-radius: 8px;
+      background: #3d3d3d;
+      border: 1px solid #555;
+      color: var(--txt);
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .notes-section input:focus {
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="section notes-section">
+      <input
+        type="text"
+        id="notes"
+        maxlength="15"
+        placeholder="フィルム番号など"
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="section">
+      <div class="tabs">
+        <div class="tab active" id="tab1" onclick="setMode(1)">
+          Classic Meter Mode
+        </div>
+        <div class="tab" id="tab2" onclick="setMode(2)">
+          Modern Meter Mode
+        </div>
+      </div>
+
+      <label for="iso-select">実効感度を指定してください</label>
+      <select id="iso-select" onchange="calculate()"></select>
+    </div>
+
+    <div class="section">
+      <label>被写体のZONE V の測定値を指定してください</label>
+      <div class="ev-control">
+        <button class="btn" onclick="adjustEv(-1)">◀</button>
+        <div>
+          <div class="ev-val" id="ev-value">10.0</div>
+          <div class="ev-label">ZONE V EV</div>
+        </div>
+        <button class="btn" onclick="adjustEv(1)">▶</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <label>各ゾーンの対応EV値 (II ～ VIII)</label>
+      <div class="zone-bar">
+        <div class="zone-box z2">
+          <span class="zone-name">II</span>
+          <span class="zone-ev" id="z2-val">-</span>
+        </div>
+        <div class="zone-box z3">
+          <span class="zone-name">III</span>
+          <span class="zone-ev" id="z3-val">-</span>
+        </div>
+        <div class="zone-box z4">
+          <span class="zone-name">IV</span>
+          <span class="zone-ev" id="z4-val">-</span>
+        </div>
+        <div class="zone-box z5">
+          <span class="zone-name">V</span>
+          <span class="zone-ev" id="z5-val">-</span>
+        </div>
+        <div class="zone-box z6">
+          <span class="zone-name">VI</span>
+          <span class="zone-ev" id="z6-val">-</span>
+        </div>
+        <div class="zone-box z7">
+          <span class="zone-name">VII</span>
+          <span class="zone-ev" id="z7-val">-</span>
+        </div>
+        <div class="zone-box z8">
+          <span class="zone-name">VIII</span>
+          <span class="zone-ev" id="z8-val">-</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <label>ZONE V の露出組み合わせ</label>
+      <div class="results-container" id="results"></div>
+    </div>
+  </div>
+
+  <script>
+    const isoList = [
+      6.4, 8, 10, 12, 16, 20, 25, 32, 40, 50, 64, 80,
+      100, 125, 160, 200, 250, 320, 400, 500, 640, 800,
+      1000, 1250, 1600, 2000, 2500, 3200, 4000, 5000, 6400
+    ];
+
+    const fNumberStrings = [
+      "1.0", "1.1", "1.2", "1.4", "1.6", "1.8", "2.0",
+      "2.2", "2.5", "2.8", "3.2", "3.5", "4.0", "4.5",
+      "5.0", "5.6", "6.3", "7.1", "8.0", "9.0", "10",
+      "11", "13", "14", "16", "18", "20", "22", "25",
+      "29", "32", "36", "40", "45", "51", "57", "64",
+      "72", "81", "90", "102", "114", "128"
+    ];
+
+    const fNumberValues = [
+      1.0, 1.12, 1.26, 1.41, 1.59, 1.78, 2.0, 2.24, 2.52,
+      2.83, 3.17, 3.56, 4.0, 4.49, 5.04, 5.66, 6.35, 7.13,
+      8.0, 8.98, 10.08, 11.31, 12.70, 14.25, 16.0, 17.96,
+      20.16, 22.63, 25.4, 28.51, 32.0, 35.92, 40.32, 45.25,
+      50.8, 57.02, 64.0, 71.84, 80.63, 90.51, 101.59, 114.04,
+      128.0
+    ];
+
+    const shutterStrings = [
+      "1/8000", "1/6400", "1/5000", "1/4000", "1/3200",
+      "1/2500", "1/2000", "1/1600", "1/1250", "1/1000",
+      "1/800", "1/640", "1/500", "1/400", "1/320",
+      "1/250", "1/200", "1/160", "1/125", "1/100",
+      "1/80", "1/60", "1/50", "1/40", "1/30", "1/25",
+      "1/20", "1/15", "1/13", "1/10", "1/8", "1/6",
+      "1/5", "1/4", "1/3", "1/2.5", "1/2", "0.6s",
+      "0.8s", "1s", "1.3s", "1.6s", "2s", "2.5s",
+      "3.2s", "4s", "5s", "6s", "8s", "10s", "13s",
+      "16s", "20s", "25s", "30s", "40s", "50s", "60s",
+      "80s", "100s", "120s"
+    ];
+
+    const shutterValues = [
+      1 / 8192, 1 / 6502, 1 / 5161, 1 / 4096, 1 / 3251,
+      1 / 2580, 1 / 2048, 1 / 1625, 1 / 1290, 1 / 1024,
+      1 / 813, 1 / 645, 1 / 512, 1 / 406, 1 / 323,
+      1 / 256, 1 / 203, 1 / 161, 1 / 128, 1 / 102,
+      1 / 81, 1 / 64, 1 / 51, 1 / 40, 1 / 32, 1 / 25,
+      1 / 20, 1 / 16, 1 / 12.7, 1 / 10.1, 1 / 8, 1 / 6.3,
+      1 / 5.0, 1 / 4, 1 / 3.2, 1 / 2.5, 1 / 2, 0.63,
+      0.79, 1, 1.26, 1.59, 2, 2.52, 3.17, 4, 5.04,
+      6.35, 8, 10.08, 12.70, 16, 20.16, 25.40, 32,
+      40.32, 50.80, 64, 80.63, 101.59, 128
+    ];
+
+    const fullStopFNumbers = [
+      "1.0", "1.4", "2.0", "2.8", "4.0", "5.6", "8.0",
+      "11", "16", "22", "32", "45", "64", "90", "128"
+    ];
+
+    const fullStopShutters = [
+      "1/8000", "1/4000", "1/2000", "1/1000", "1/500",
+      "1/250", "1/125", "1/60", "1/30", "1/15", "1/8",
+      "1/4", "1/2", "1s", "2s", "4s", "8s", "16s",
+      "30s", "60s", "120s"
+    ];
+
+    let currentMode = 1;
+    let currentEvSteps = 30;
+    let selectedFStr = null;
+
+    window.onload = function () {
+      const select = document.getElementById("iso-select");
+
+      isoList.forEach((iso) => {
+        const opt = document.createElement("option");
+        opt.value = iso;
+        opt.textContent = "実効感度 " + iso;
+
+        if (iso === 100) {
+          opt.selected = true;
+        }
+
+        select.appendChild(opt);
+      });
+
+      calculate();
+    };
+
+    function setMode(mode) {
+      currentMode = mode;
+
+      document.getElementById("tab1").classList.toggle("active", mode === 1);
+      document.getElementById("tab2").classList.toggle("active", mode === 2);
+
+      calculate();
+    }
+
+    function adjustEv(dir) {
+      currentEvSteps += dir;
+
+      if (currentEvSteps < 0) {
+        currentEvSteps = 0;
+      }
+
+      if (currentEvSteps > 60) {
+        currentEvSteps = 60;
+      }
+
+      calculate();
+    }
+
+    // 行をクリックしたときの選択処理
+    function selectRow(fStr) {
+      if (selectedFStr === fStr) {
+        selectedFStr = null;
+      } else {
+        selectedFStr = fStr;
+      }
+
+      calculate();
+    }
+
+    function calculate() {
+      const evV_100 = currentEvSteps / 3;
+
+      document.getElementById("ev-value").textContent = evV_100.toFixed(1);
+
+      for (let z = 2; z <= 8; z++) {
+        document.getElementById(`z${z}-val`).textContent =
+          (evV_100 + (z - 5)).toFixed(1);
+      }
+
+      const selectedIso = parseFloat(
+        document.getElementById("iso-select").value
+      );
+
+      // Classic Meter Mode：実効感度に応じてEVを補正
+      // Modern Meter Mode：測定EV値をそのまま使用
+      const targetEv = currentMode === 1
+        ? evV_100 + Math.log2(selectedIso / 100)
+        : evV_100;
+
+      const container = document.getElementById("results");
+      container.innerHTML = "";
+
+      for (let fIndex = 0; fIndex < fNumberStrings.length; fIndex++) {
+        const fStr = fNumberStrings[fIndex];
+        const fVal = fNumberValues[fIndex];
+        const reqShutter = (fVal * fVal) / Math.pow(2, targetEv);
+
+        let bestS = -1;
+        let minDiff = Infinity;
+
+        for (let s = 0; s < shutterValues.length; s++) {
+          const diff = Math.abs(
+            Math.log2(shutterValues[s] / reqShutter)
+          );
+
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestS = s;
+          }
+        }
+
+        if (bestS !== -1 && minDiff < 0.3) {
+          const row = document.createElement("div");
+          row.className = "result-row";
+
+          if (selectedFStr === fStr) {
+            row.classList.add("selected");
+          }
+
+          row.onclick = function () {
+            selectRow(fStr);
+          };
+
+          const fClass = fullStopFNumbers.includes(fStr)
+            ? "stop-value"
+            : "";
+
+          const shutterStr = shutterStrings[bestS];
+          const sClass = fullStopShutters.includes(shutterStr)
+            ? "stop-value"
+            : "";
+
+          row.innerHTML =
+            `<span class="${fClass}">f/${fStr}</span>` +
+            `<span class="${sClass}">${shutterStr}</span>`;
+
+          container.appendChild(row);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
