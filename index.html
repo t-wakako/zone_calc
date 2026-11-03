@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zone System Calculator</title>
+
   <style>
     :root {
       --bg: #1a1a1a;
@@ -63,6 +64,8 @@
       outline: none;
     }
 
+    /* メーターモード切り替え */
+
     .tabs {
       display: flex;
       background: #3d3d3d;
@@ -85,6 +88,8 @@
       color: #1a1a1a;
       font-weight: bold;
     }
+
+    /* EV値の調整 */
 
     .ev-control {
       display: flex;
@@ -116,6 +121,8 @@
       color: #aaa;
       text-align: center;
     }
+
+    /* ゾーン表示 */
 
     .zone-bar {
       display: flex;
@@ -184,6 +191,8 @@
       font-size: 0.75rem;
     }
 
+    /* 露出組み合わせ */
+
     .results-container {
       background: #222;
       border-radius: 12px;
@@ -214,7 +223,8 @@
       border-radius: 0;
     }
 
-    /* 選択中の行は背景を青、文字を黒にする */
+    /* 選択中の行 */
+
     .result-row.selected,
     .result-row.selected .stop-value {
       background-color: var(--accent) !important;
@@ -222,11 +232,14 @@
       font-weight: bold;
     }
 
-    /* 1段ごとの絞り値・シャッタースピードを個別に強調 */
+    /* 1段ごとの絞り値・シャッタースピード */
+
     .stop-value {
       color: var(--accent);
       font-weight: bold;
     }
+
+    /* メモ欄 */
 
     .notes-section input {
       width: 100%;
@@ -243,74 +256,131 @@
     .notes-section input:focus {
       border-color: var(--accent);
     }
+
+    /* スポットメーターに戻るボタン */
+
+    .return-button {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin-top: 16px;
+      background: var(--accent);
+      color: #1a1a1a;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
+
 <body>
   <div class="calculator">
+
+    <!-- メーターモード・ISO・メモ -->
     <div class="section">
       <div class="tabs">
-        <div class="tab active" id="tab1" onclick="setMode(1)">
+        <div
+          class="tab active"
+          id="tab1"
+          onclick="setMode(1)"
+        >
           Classic Meter
         </div>
-        <div class="tab" id="tab2" onclick="setMode(2)">
+
+        <div
+          class="tab"
+          id="tab2"
+          onclick="setMode(2)"
+        >
           Modern Meter
         </div>
       </div>
 
-      <label for="iso-select">実効感度を指定してください</label>
-      <select id="iso-select" onchange="calculate()"></select>
+      <label for="iso-select">
+        実効感度を指定してください
+      </label>
+      <select
+        id="iso-select"
+        onchange="calculate()"
+      ></select>
 
-    <div class="section notes-section">
-      <input
-        type="text"
-        id="notes"
-        maxlength="15"
-        placeholder="フィルム番号など"
-        autocomplete="off"
-      >
+      <div class="section notes-section">
+        <input
+          type="text"
+          id="notes"
+          maxlength="15"
+          placeholder="フィルム番号など"
+          autocomplete="off"
+        >
+      </div>
     </div>
 
-    </div>
-
+    <!-- ZONE V の測定値 -->
     <div class="section">
-      <label>被写体のZONE V の測定値を指定してください</label>
+      <label>
+        被写体のZONE V の測定値を指定してください
+      </label>
+
+      <label
+        id="measured-ev"
+        style="display: none;"
+      ></label>
+
       <div class="ev-control">
-        <button class="btn" onclick="adjustEv(-1)">◀</button>
+        <button
+          class="btn"
+          onclick="adjustEv(-1)"
+        >◀</button>
+
         <div>
           <div class="ev-val" id="ev-value">10.0</div>
           <div class="ev-label">ZONE V EV</div>
         </div>
-        <button class="btn" onclick="adjustEv(1)">▶</button>
+
+        <button
+          class="btn"
+          onclick="adjustEv(1)"
+        >▶</button>
       </div>
     </div>
 
+    <!-- 各ゾーンのEV値 -->
     <div class="section">
       <label>各ゾーンの対応EV値 (II ～ VIII)</label>
+
       <div class="zone-bar">
         <div class="zone-box z2">
           <span class="zone-name">II</span>
           <span class="zone-ev" id="z2-val">-</span>
         </div>
+
         <div class="zone-box z3">
           <span class="zone-name">III</span>
           <span class="zone-ev" id="z3-val">-</span>
         </div>
+
         <div class="zone-box z4">
           <span class="zone-name">IV</span>
           <span class="zone-ev" id="z4-val">-</span>
         </div>
+
         <div class="zone-box z5">
           <span class="zone-name">V</span>
           <span class="zone-ev" id="z5-val">-</span>
         </div>
+
         <div class="zone-box z6">
           <span class="zone-name">VI</span>
           <span class="zone-ev" id="z6-val">-</span>
         </div>
+
         <div class="zone-box z7">
           <span class="zone-name">VII</span>
           <span class="zone-ev" id="z7-val">-</span>
         </div>
+
         <div class="zone-box z8">
           <span class="zone-name">VIII</span>
           <span class="zone-ev" id="z8-val">-</span>
@@ -318,13 +388,33 @@
       </div>
     </div>
 
+    <!-- 露出組み合わせ -->
     <div class="section">
       <label>ZONE V の露出組み合わせ</label>
-      <div class="results-container" id="results"></div>
+      <div
+        class="results-container"
+        id="results"
+      ></div>
     </div>
+
+    <!-- スポットメーターに戻る -->
+    <button
+      type="button"
+      id="return-to-app"
+      class="return-button"
+      onclick="returnToApp()"
+      style="display: none;"
+    >
+      ◀ スポットメーターに戻る
+    </button>
+
   </div>
 
   <script>
+    // ============================================================
+    // 定数
+    // ============================================================
+
     const isoList = [
       6.4, 8, 10, 12, 16, 20, 25, 32, 40, 50, 64, 80,
       100, 125, 160, 200, 250, 320, 400, 500, 640, 800,
@@ -388,15 +478,25 @@
       "30s", "60s", "120s"
     ];
 
+    // ============================================================
+    // 状態管理
+    // ============================================================
+
     let currentMode = 1;
-    let currentEvSteps = 30;
+    let currentEv = 10.0;
     let selectedFStr = null;
 
+    // ============================================================
+    // 初期化
+    // ============================================================
+
     window.onload = function () {
+      // ISO感度の選択肢を作成
       const select = document.getElementById("iso-select");
 
       isoList.forEach((iso) => {
         const opt = document.createElement("option");
+
         opt.value = iso;
         opt.textContent = "実効感度 " + iso;
 
@@ -407,33 +507,83 @@
         select.appendChild(opt);
       });
 
+      // URLから測定EV値を取得
+      const params = new URLSearchParams(window.location.search);
+      const evParam = params.get("ev");
+
+      if (evParam !== null && evParam.trim() !== "") {
+        const measuredEv = Number(evParam);
+
+        // 有効範囲：EV 0～20
+        if (
+          Number.isFinite(measuredEv) &&
+          measuredEv >= 0 &&
+          measuredEv <= 20
+        ) {
+          // 元の測定値を小数点以下2桁で表示
+          const measuredLabel =
+            document.getElementById("measured-ev");
+
+          measuredLabel.textContent =
+            "測定値:EV" + measuredEv.toFixed(2);
+
+          measuredLabel.style.display = "block";
+
+          // 1/3段単位に丸める
+          currentEv = Math.round(measuredEv * 3) / 3;
+
+          // スポットメーターに戻るボタンを表示
+          document.getElementById(
+            "return-to-app"
+          ).style.display = "block";
+
+          // Modern Meterに切り替えて計算
+          setMode(2);
+          return;
+        }
+      }
+
+      // パラメータなし・不正値の場合は従来の初期値
       calculate();
     };
+
+    // ============================================================
+    // メーターモード切り替え
+    // ============================================================
 
     function setMode(mode) {
       currentMode = mode;
 
-      document.getElementById("tab1").classList.toggle("active", mode === 1);
-      document.getElementById("tab2").classList.toggle("active", mode === 2);
+      document.getElementById("tab1").classList.toggle(
+        "active",
+        mode === 1
+      );
+
+      document.getElementById("tab2").classList.toggle(
+        "active",
+        mode === 2
+      );
 
       calculate();
     }
+
+    // ============================================================
+    // EV値の調整
+    // ============================================================
 
     function adjustEv(dir) {
-      currentEvSteps += dir;
-
-      if (currentEvSteps < 0) {
-        currentEvSteps = 0;
-      }
-
-      if (currentEvSteps > 60) {
-        currentEvSteps = 60;
-      }
+      currentEv = Math.max(
+        0,
+        Math.min(20, currentEv + dir / 3)
+      );
 
       calculate();
     }
 
-    // 行をクリックしたときの選択処理
+    // ============================================================
+    // 露出組み合わせの行選択
+    // ============================================================
+
     function selectRow(fStr) {
       if (selectedFStr === fStr) {
         selectedFStr = null;
@@ -444,37 +594,55 @@
       calculate();
     }
 
+    // ============================================================
+    // EV値・露出組み合わせの計算
+    // ============================================================
+
     function calculate() {
-      const evV_100 = currentEvSteps / 3;
+      const evV_100 = currentEv;
 
-      document.getElementById("ev-value").textContent = evV_100.toFixed(1);
+      // ZONE VのEV値を表示
+      document.getElementById("ev-value").textContent =
+        evV_100.toFixed(1);
 
+      // ZONE II～VIIIのEV値を表示
       for (let z = 2; z <= 8; z++) {
-        document.getElementById(`z${z}-val`).textContent =
-          (evV_100 + (z - 5)).toFixed(1);
+        document.getElementById(
+          `z${z}-val`
+        ).textContent = (evV_100 + (z - 5)).toFixed(1);
       }
 
+      // ISO感度を取得
       const selectedIso = parseFloat(
         document.getElementById("iso-select").value
       );
 
-      // Classic Meter Mode：実効感度に応じてEVを補正
-      // Modern Meter Mode：測定EV値をそのまま使用
+      // Classic Meter：ISO感度に応じてEVを補正
+      // Modern Meter：測定EV値をそのまま使用
       const targetEv = currentMode === 1
         ? evV_100 + Math.log2(selectedIso / 100)
         : evV_100;
 
+      // 露出組み合わせの表示を初期化
       const container = document.getElementById("results");
       container.innerHTML = "";
 
-      for (let fIndex = 0; fIndex < fNumberStrings.length; fIndex++) {
+      // 各絞り値に対するシャッタースピードを計算
+      for (
+        let fIndex = 0;
+        fIndex < fNumberStrings.length;
+        fIndex++
+      ) {
         const fStr = fNumberStrings[fIndex];
         const fVal = fNumberValues[fIndex];
-        const reqShutter = (fVal * fVal) / Math.pow(2, targetEv);
+
+        const reqShutter =
+          (fVal * fVal) / Math.pow(2, targetEv);
 
         let bestS = -1;
         let minDiff = Infinity;
 
+        // 最も近いシャッタースピードを探す
         for (let s = 0; s < shutterValues.length; s++) {
           const diff = Math.abs(
             Math.log2(shutterValues[s] / reqShutter)
@@ -486,6 +654,7 @@
           }
         }
 
+        // 誤差が0.3段未満の組み合わせを表示
         if (bestS !== -1 && minDiff < 0.3) {
           const row = document.createElement("div");
           row.className = "result-row";
@@ -498,11 +667,14 @@
             selectRow(fStr);
           };
 
+          // 1段ごとの絞り値を強調
           const fClass = fullStopFNumbers.includes(fStr)
             ? "stop-value"
             : "";
 
+          // 1段ごとのシャッタースピードを強調
           const shutterStr = shutterStrings[bestS];
+
           const sClass = fullStopShutters.includes(shutterStr)
             ? "stop-value"
             : "";
@@ -514,6 +686,14 @@
           container.appendChild(row);
         }
       }
+    }
+
+    // ============================================================
+    // iPhoneスポットメーターアプリに戻る
+    // ============================================================
+
+    function returnToApp() {
+      window.location.href = "spotmeter://return";
     }
   </script>
 </body>
