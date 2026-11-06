@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zone System Calculator</title>
   <style>
-    :root {
+      :root {
       --bg: #1a1a1a;
       --card: #2d2d2d;
       --txt: #e0e0e0;
@@ -210,7 +210,6 @@
       transition: background .15s,color .15s;
     }
 
-
     .stop-value {
       color: var(--accent);
       font-weight: bold;
@@ -270,8 +269,6 @@
       color: #1a1a1a !important;
     }
 
-
-
   </style>
 </head>
 <body>
@@ -281,8 +278,20 @@
         <button class="tab active" id="tab1" type="button" onclick="setMode(1)">Classic Meter</button>
         <button class="tab" id="tab2" type="button" onclick="setMode(2)">Modern Meter</button>
       </div>
-      <label for="iso-select">実効感度を指定してください</label>
-      <select id="iso-select" onchange="calculate()"></select>
+
+      <div id="iso-section">
+        <label for="iso-select">実効感度を指定してください</label>
+        <select id="iso-select" onchange="calculate()"></select>
+      </div>
+
+      <div id="compensation-section" hidden>
+        <label for="compensation-select">露出補正(-3.0～3.0)</label>
+        <select
+          id="compensation-select"
+          onchange="setCompensation(this.value)">
+        </select>
+      </div>
+
       <div class="notes-section">
         <input type="text" id="notes" maxlength="15" placeholder="フィルム番号など" autocomplete="off">
       </div>
@@ -292,7 +301,10 @@
       <label id="measured-ev" hidden></label>
       <div class="ev-control">
         <button class="btn" type="button" onclick="adjustEv(-1)" aria-label="EVを1/3段下げる">◀</button>
-        <div><div class="ev-val" id="ev-value">10.0</div><div class="ev-label">ZONE V EV</div></div>
+        <div>
+          <div class="ev-val" id="ev-value">10.0</div>
+          <div class="ev-label">ZONE V EV</div>
+        </div>
         <button class="btn" type="button" onclick="adjustEv(1)" aria-label="EVを1/3段上げる">▶</button>
       </div>
     </div>
@@ -329,8 +341,10 @@
     let currentEvThirds = 30;
     let currentMode = 1;
     let selectedFStr = null;
+    let selectedSStr = null;
     let appSession = false;
     let ready = false;
+    let compensationThirds = 0;
 
     function validNumber(value) {
       if (value === null || value === undefined || typeof value === 'boolean') return null;
@@ -358,9 +372,15 @@
 
     function setMode(mode) {
       if (mode !== 1 && mode !== 2) return;
+
       currentMode = mode;
+
       document.getElementById('tab1').classList.toggle('active', mode === 1);
       document.getElementById('tab2').classList.toggle('active', mode === 2);
+
+      document.getElementById('iso-section').hidden = mode !== 1;
+      document.getElementById('compensation-section').hidden = mode !== 2;
+
       calculate();
     }
 
@@ -375,10 +395,10 @@
     }
 
     // ============================================================
-    // EV・ゾーン・露出組み合わせの計算
+      // EV・ゾーン・露出組み合わせの計算
     // ============================================================
 
-    function calculate() {
+      function calculate() {
       if (!ready) return;
 
       const ev = currentEvThirds / 3;
@@ -391,9 +411,15 @@
       }
 
       const iso = Number(document.getElementById('iso-select').value);
+
+      const compensation = compensationThirds / 3;
+
       const targetEv = currentMode === 1
         ? ev + Math.log2(iso / 100)
-        : ev;
+        : ev - compensation;
+
+      // 前回のシャッタースピードをクリア
+      selectedSStr = null;
 
       const container = document.getElementById('results');
       container.replaceChildren();
@@ -440,6 +466,13 @@
           ? shutterStrings[bestIndex]
           : formatCalculatedShutter(requiredShutter);
 
+        // 選択中の絞りに対応するシャッタースピードを保存
+        if (isSelected) {
+          selectedSStr = hasStandardShutter
+            ? shutterStrings[bestIndex]
+            : null;
+        }
+
         const sSpan = document.createElement('span');
         sSpan.textContent = shutterStr;
         if (fullStopShutters.includes(shutterStr)) {
@@ -475,7 +508,7 @@
       const selectedRect = selectedRow.getBoundingClientRect();
       const rowTop = selectedRect.top - containerRect.top + container.scrollTop;
       const targetScroll = rowTop -
-        (container.clientHeight - selectedRow.offsetHeight) / 2;
+      (container.clientHeight - selectedRow.offsetHeight) / 2;
       const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
 
       container.scrollTop = Math.max(0, Math.min(maxScroll, targetScroll));
@@ -522,33 +555,67 @@
     function currentSettings() {
       return {
         ev: currentEvThirds / 3,
-        iso: Number(document.getElementById('iso-select').value),
-        notes: document.getElementById('notes').value,
-        f: selectedFStr
+          iso: Number(document.getElementById('iso-select').value),
+          notes: document.getElementById('notes').value,
+          f: selectedFStr,
+          s: selectedSStr,
+          comp: currentMode === 2 ? compensationThirds / 3 : 0
       };
     }
 
     function returnToApp() {
       if (!appSession) return;
+
       const data = currentSettings();
       const notes = validNotes(data.notes);
-      if (validIso(data.iso) === null || notes === null ||
-          (data.f !== null && validAperture(data.f) === null)) {
+
+      if (
+        validIso(data.iso) === null ||
+      notes === null ||
+      (data.f !== null && validAperture(data.f) === null)
+      ) {
         alert('入力値を確認してください。');
         return;
       }
+
+      // WKWebView の JavaScript Bridge
       const bridge = window.webkit?.messageHandlers?.returnData;
+
       if (bridge && typeof bridge.postMessage === 'function') {
         bridge.postMessage(data);
         return;
       }
-      // Browser / Safari fallback. Requires the iOS app to register spotmeter://.
+
+      // Safari 等からのカスタムURLスキーム
       const url = new URL('spotmeter://return');
+
       url.searchParams.set('ev', String(data.ev));
       url.searchParams.set('iso', String(data.iso));
       url.searchParams.set('notes', data.notes);
-      if (data.f !== null) url.searchParams.set('f', data.f);
+
+      if (data.f !== null) {
+        url.searchParams.set('f', data.f);
+      }
+
+      // シャッタースピードを追加
+      if (data.s !== null) {
+        url.searchParams.set('s', data.s);
+      }
+
+      url.searchParams.set('comp', String(data.comp));
+
       window.location.href = url.toString();
+    }
+
+    function setCompensation(value) {
+      const thirds = Number(value);
+
+      if (!Number.isInteger(thirds) || thirds < -9 || thirds > 9) {
+        return;
+      }
+
+      compensationThirds = thirds;
+      calculate();
     }
 
     function initialize() {
@@ -560,6 +627,25 @@
         option.selected = iso === 100;
         select.appendChild(option);
       });
+
+      const compensationSelect =
+        document.getElementById('compensation-select');
+
+      for (let thirds = -9; thirds <= 9; thirds++) {
+        const option = document.createElement('option');
+
+        option.value = String(thirds);
+
+        const value = thirds / 3;
+
+        option.textContent =
+          `${value > 0 ? '+' : ''}${value.toFixed(1)}`;
+
+        option.selected = thirds === 0;
+
+        compensationSelect.appendChild(option);
+      }
+
       ready = true;
       const params = new URLSearchParams(window.location.search);
       const values = {};
@@ -576,6 +662,7 @@
     } else {
       initialize();
     }
+
   </script>
 </body>
 </html>
