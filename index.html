@@ -285,7 +285,7 @@
       </div>
 
       <div id="compensation-section" hidden>
-        <label for="compensation-select">露出補正(-3.0～3.0)</label>
+        <label for="compensation-select">露出補正(-4.0～3.0)</label>
         <select
           id="compensation-select"
           onchange="setCompensation(this.value)">
@@ -339,6 +339,7 @@
 
     // Store EV as integer thirds to avoid cumulative floating-point drift.
     let currentEvThirds = 30;
+    let originalEv = null;  // アプリから渡された元のEV値
     let currentMode = 1;
     let selectedFStr = null;
     let selectedSStr = null;
@@ -525,12 +526,19 @@
       let changed = false;
 
       if (ev !== null && ev >= 0 && ev <= 20) {
+        // アプリから渡された元のEV値を保持
+        originalEv = ev;
+
+        // HTML上で操作するEV値
         currentEvThirds = Math.round(ev * 3);
+
         const measuredLabel = document.getElementById('measured-ev');
         measuredLabel.textContent = `測定値:EV${ev.toFixed(2)}`;
         measuredLabel.hidden = false;
+
         changed = true;
       }
+      
       if (iso !== null) {
         document.getElementById('iso-select').value = String(iso);
         changed = true;
@@ -555,11 +563,12 @@
     function currentSettings() {
       return {
         ev: currentEvThirds / 3,
-          iso: Number(document.getElementById('iso-select').value),
-          notes: document.getElementById('notes').value,
-          f: selectedFStr,
-          s: selectedSStr,
-          comp: currentMode === 2 ? compensationThirds / 3 : 0
+        originalEv: originalEv,
+        iso: Number(document.getElementById('iso-select').value),
+        notes: document.getElementById('notes').value,
+        f: selectedFStr,
+        s: selectedSStr,
+        comp: currentMode === 2 ? compensationThirds / 3 : 0
       };
     }
 
@@ -604,13 +613,18 @@
 
       url.searchParams.set('comp', String(data.comp));
 
+      if (data.originalEv !== null) {
+        url.searchParams.set('originalEv', String(data.originalEv));
+      }
+
       window.location.href = url.toString();
+
     }
 
     function setCompensation(value) {
       const thirds = Number(value);
 
-      if (!Number.isInteger(thirds) || thirds < -9 || thirds > 9) {
+      if (!Number.isInteger(thirds) || thirds < -12 || thirds > 9) {
         return;
       }
 
@@ -631,7 +645,7 @@
       const compensationSelect =
         document.getElementById('compensation-select');
 
-      for (let thirds = -9; thirds <= 9; thirds++) {
+      for (let thirds = -12; thirds <= 9; thirds++) {
         const option = document.createElement('option');
 
         option.value = String(thirds);
